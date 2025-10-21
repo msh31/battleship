@@ -225,7 +225,7 @@ func renderPlacementBoard(m Model) string {
 	// Render column headers
 	sb.WriteString("    ")
 	for col := 0; col < m.game.BoardSize; col++ {
-		sb.WriteString(fmt.Sprintf(" %c  ", 'A'+col))
+		sb.WriteString(fmt.Sprintf(" %c ", 'A'+col))
 	}
 	sb.WriteString("\n")
 
@@ -312,7 +312,7 @@ func renderPlayerBoard(m Model) string {
 	// Column headers
 	sb.WriteString("    ")
 	for col := 0; col < m.game.BoardSize; col++ {
-		sb.WriteString(fmt.Sprintf(" %c  ", 'A'+col))
+		sb.WriteString(fmt.Sprintf(" %c ", 'A'+col))
 	}
 	sb.WriteString("\n")
 
@@ -335,13 +335,13 @@ func renderPlayerBoard(m Model) string {
 func renderEnemyBoard(m Model) string {
 	var sb strings.Builder
 
-	sb.WriteString(headerStyle.Render("Enemy Waters"))
+	sb.WriteString(headerStyle.Render("Captain Claude's Fleet"))
 	sb.WriteString("\n\n")
 
 	// Column headers
 	sb.WriteString("    ")
 	for col := 0; col < m.game.BoardSize; col++ {
-		sb.WriteString(fmt.Sprintf(" %c  ", 'A'+col))
+		sb.WriteString(fmt.Sprintf(" %c ", 'A'+col))
 	}
 	sb.WriteString("\n")
 
@@ -382,7 +382,11 @@ func renderCell(cell game.CellState, isCursor bool, isPreview bool, showShips bo
 			symbol = "█"
 			return shipStyle.Render(" " + symbol + " ")
 		}
+		// For hidden enemy ships, show cursor if applicable
 		symbol = "~"
+		if isCursor {
+			return cursorStyle.Render("[" + symbol + "]")
+		}
 		return waterStyle.Render(" " + symbol + " ")
 
 	case game.Hit:
@@ -413,7 +417,7 @@ func renderGameOver(m Model) string {
 	// Game over message
 	gameOverMsg := ""
 	if m.game.Winner == "Player" {
-		gameOverMsg = "🎉 VICTORY! You sunk all enemy ships! 🎉"
+		gameOverMsg = "🎉 VICTORY! You sunk Captain Claude's fleet! 🎉"
 	} else {
 		gameOverMsg = "💥 DEFEAT! All your ships were sunk! 💥"
 	}
