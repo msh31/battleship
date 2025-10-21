@@ -150,19 +150,19 @@ func (g *Game) ComputerAttack() {
 
 	if hit {
 		if ship != nil && ship.IsSunk() {
-			g.LastMessage = "Computer sunk your " + ship.Name + "!"
+			g.LastMessage = "Claude sunk your " + ship.Name + "!"
 		} else {
-			g.LastMessage = "Computer hit your ship!"
+			g.LastMessage = "Claude hit your ship!"
 		}
 
 		if g.PlayerBoard.AllShipsSunk() {
 			g.Phase = GameOverPhase
-			g.Winner = "Computer"
+			g.Winner = "Claude"
 			g.LastMessage = "Defeat! All your ships were sunk!"
 			return
 		}
 	} else {
-		g.LastMessage = "Computer missed!"
+		g.LastMessage = "Claude missed!"
 	}
 
 	g.Phase = PlayerTurnPhase
