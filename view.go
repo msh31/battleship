@@ -309,10 +309,16 @@ func renderCell(cell game.CellState, isCursor bool, isPreview bool, showShips bo
 
 	case game.Hit:
 		symbol = "X"
+		if isCursor {
+			return cursorStyle.Render("[" + symbol + "]")
+		}
 		return hitStyle.Render(" " + symbol + " ")
 
 	case game.Miss:
 		symbol = "○"
+		if isCursor {
+			return cursorStyle.Render("[" + symbol + "]")
+		}
 		return missStyle.Render(" " + symbol + " ")
 	}
 
