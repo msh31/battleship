@@ -7,3 +7,4 @@ battleship
 
 # OS
 .DS_Store
+*.exe
