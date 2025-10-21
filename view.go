@@ -112,6 +112,10 @@ func renderGame(m Model) string {
 		return renderMainMenu(m)
 	}
 
+	if m.game.Phase == game.HowToPlayPhase {
+		return renderHowToPlay(m)
+	}
+
 	var sb strings.Builder
 
 	// Title
@@ -172,8 +176,16 @@ func renderMainMenu(m Model) string {
 	}
 	sb.WriteString("\n\n")
 
-	// Quit
+	// How to Play
 	if m.menuSelection == 2 {
+		sb.WriteString(selectedMenuItemStyle.Render("?  How to Play"))
+	} else {
+		sb.WriteString(menuItemStyle.Render("?  How to Play"))
+	}
+	sb.WriteString("\n\n")
+
+	// Quit
+	if m.menuSelection == 3 {
 		sb.WriteString(selectedMenuItemStyle.Render("✕  Quit"))
 	} else {
 		sb.WriteString(menuItemStyle.Render("✕  Quit"))
@@ -182,6 +194,62 @@ func renderMainMenu(m Model) string {
 
 	sb.WriteString("\n")
 	sb.WriteString(helpStyle.Render("Use ↑/↓ to navigate, ←/→ to change difficulty, Enter to select"))
+
+	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, sb.String())
+}
+
+func renderHowToPlay(m Model) string {
+	var sb strings.Builder
+
+	// Title
+	sb.WriteString("\n\n")
+	sb.WriteString(menuTitleStyle.Render("⚓  HOW TO PLAY  ⚓"))
+	sb.WriteString("\n\n")
+
+	helpText := `OBJECTIVE:
+Sink all of Captain Claude's ships before he sinks yours!
+
+SETUP:
+Place your fleet of 5 ships on your 10x10 grid:
+  • Carrier    (5 spaces)
+  • Battleship (4 spaces)
+  • Cruiser    (3 spaces)
+  • Submarine  (3 spaces)
+  • Destroyer  (2 spaces)
+
+Use arrow keys to move cursor, O to rotate, and Enter to place each ship.
+
+GAMEPLAY:
+Take turns firing at coordinates on the enemy grid.
+  ~ = Water (unexplored)
+  ○ = Miss
+  X = Hit
+  █ = Your ship
+
+Keep firing until you hit a ship, then hunt around that area to sink it.
+First player to sink all 5 enemy ships wins!
+
+DIFFICULTY LEVELS:
+  Easy   - Random attacks
+  Normal - Hunts around hits
+  Hard   - Smart targeting with patterns
+
+CONTROLS:
+  Arrow Keys/WASD - Move cursor
+  O - Rotate ship (during placement)
+  Space/Enter - Place ship or fire
+  H - Toggle help
+  R - Restart game
+  Q - Quit`
+
+	contentStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#CCCCCC")).
+		Padding(1, 4).
+		Width(70)
+
+	sb.WriteString(contentStyle.Render(helpText))
+	sb.WriteString("\n\n")
+	sb.WriteString(helpStyle.Render("Press any key to return to menu"))
 
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, sb.String())
 }

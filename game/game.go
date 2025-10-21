@@ -10,6 +10,7 @@ type GamePhase int
 
 const (
 	MainMenuPhase GamePhase = iota
+	HowToPlayPhase
 	PlacementPhase
 	PlayerTurnPhase
 	ComputerTurnPhase

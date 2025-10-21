@@ -94,7 +94,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "down", "s":
 			if m.game.Phase == game.MainMenuPhase {
-				if m.menuSelection < 2 { // 0 = Difficulty, 1 = Play, 2 = Quit
+				if m.menuSelection < 3 { // 0 = Difficulty, 1 = Play, 2 = How to Play, 3 = Quit
 					m.menuSelection++
 				}
 			} else if m.cursorRow < m.game.BoardSize-1 {
@@ -165,10 +165,18 @@ func (m Model) handleAction() (tea.Model, tea.Cmd) {
 			m.shipOrientation = game.Horizontal
 			m.showHelp = true
 			m.computerThinking = false
+		} else if m.menuSelection == 2 {
+			// How to Play
+			m.game.Phase = game.HowToPlayPhase
 		} else {
 			// Quit
 			return m, tea.Quit
 		}
+		return m, nil
+
+	case game.HowToPlayPhase:
+		// Return to main menu
+		m.game.Phase = game.MainMenuPhase
 		return m, nil
 
 	case game.PlacementPhase:
