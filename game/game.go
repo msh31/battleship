@@ -124,7 +124,7 @@ func (g *Game) PlayerAttack(pos Position) bool {
 
 	if hit {
 		if ship != nil && ship.IsSunk() {
-			g.LastMessage = "Hit! You sunk the enemy's " + ship.Name + "!"
+			g.LastMessage = "Hit! You sunk Captain Claude's " + ship.Name + "!"
 		} else {
 			g.LastMessage = "Hit!"
 		}
@@ -132,7 +132,7 @@ func (g *Game) PlayerAttack(pos Position) bool {
 		if g.ComputerBoard.AllShipsSunk() {
 			g.Phase = GameOverPhase
 			g.Winner = "Player"
-			g.LastMessage = "Victory! You sunk all enemy ships!"
+			g.LastMessage = "Victory! You sunk Captain Claude's fleet!"
 			return true
 		}
 	} else {
@@ -174,19 +174,19 @@ func (g *Game) ComputerAttack() {
 
 	if hit {
 		if ship != nil && ship.IsSunk() {
-			g.LastMessage = "Computer sunk your " + ship.Name + "!"
+			g.LastMessage = "Claude sunk your " + ship.Name + "!"
 		} else {
-			g.LastMessage = "Computer hit your ship!"
+			g.LastMessage = "Claude hit your ship!"
 		}
 
 		if g.PlayerBoard.AllShipsSunk() {
 			g.Phase = GameOverPhase
-			g.Winner = "Computer"
+			g.Winner = "Claude"
 			g.LastMessage = "Defeat! All your ships were sunk!"
 			return
 		}
 	} else {
-		g.LastMessage = "Computer missed!"
+		g.LastMessage = "Claude missed!"
 	}
 
 	g.Phase = PlayerTurnPhase

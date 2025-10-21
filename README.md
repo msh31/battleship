@@ -2,6 +2,8 @@
 
 A terminal-based implementation of the classic Battleship game. Built with Go using the bubbletea TUI framework and lipgloss for styling.
 
+<img src="https://i.imgur.com/5OrtEh7.png">
+
 ## Building
 
 ```bash
