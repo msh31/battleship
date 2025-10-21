@@ -143,7 +143,7 @@ func renderPlacementBoard(m Model) string {
 	// Render column headers
 	sb.WriteString("    ")
 	for col := 0; col < m.game.BoardSize; col++ {
-		sb.WriteString(fmt.Sprintf(" %c  ", 'A'+col))
+		sb.WriteString(fmt.Sprintf(" %c ", 'A'+col))
 	}
 	sb.WriteString("\n")
 
@@ -230,7 +230,7 @@ func renderPlayerBoard(m Model) string {
 	// Column headers
 	sb.WriteString("    ")
 	for col := 0; col < m.game.BoardSize; col++ {
-		sb.WriteString(fmt.Sprintf(" %c  ", 'A'+col))
+		sb.WriteString(fmt.Sprintf(" %c ", 'A'+col))
 	}
 	sb.WriteString("\n")
 
@@ -259,7 +259,7 @@ func renderEnemyBoard(m Model) string {
 	// Column headers
 	sb.WriteString("    ")
 	for col := 0; col < m.game.BoardSize; col++ {
-		sb.WriteString(fmt.Sprintf(" %c  ", 'A'+col))
+		sb.WriteString(fmt.Sprintf(" %c ", 'A'+col))
 	}
 	sb.WriteString("\n")
 
