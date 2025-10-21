@@ -154,19 +154,34 @@ func renderMainMenu(m Model) string {
 	sb.WriteString(asciiArtStyle.Render(menuBattleshipsArt))
 	sb.WriteString("\n\n")
 
-	// Menu items
-	items := []string{"▶  Start New Game", "✕  Quit"}
-	for i, item := range items {
-		if i == m.menuSelection {
-			sb.WriteString(selectedMenuItemStyle.Render(item))
-		} else {
-			sb.WriteString(menuItemStyle.Render(item))
-		}
-		sb.WriteString("\n\n")
+	// Difficulty selection
+	difficultyNames := []string{"Easy", "Normal", "Hard"}
+	difficultyText := fmt.Sprintf("◀  Difficulty: %s  ▶", difficultyNames[m.selectedDifficulty])
+	if m.menuSelection == 0 {
+		sb.WriteString(selectedMenuItemStyle.Render(difficultyText))
+	} else {
+		sb.WriteString(menuItemStyle.Render(difficultyText))
 	}
+	sb.WriteString("\n\n")
+
+	// Start game
+	if m.menuSelection == 1 {
+		sb.WriteString(selectedMenuItemStyle.Render("▶  Start New Game"))
+	} else {
+		sb.WriteString(menuItemStyle.Render("▶  Start New Game"))
+	}
+	sb.WriteString("\n\n")
+
+	// Quit
+	if m.menuSelection == 2 {
+		sb.WriteString(selectedMenuItemStyle.Render("✕  Quit"))
+	} else {
+		sb.WriteString(menuItemStyle.Render("✕  Quit"))
+	}
+	sb.WriteString("\n\n")
 
 	sb.WriteString("\n")
-	sb.WriteString(helpStyle.Render("Use ↑/↓ or W/S to navigate, Enter to select"))
+	sb.WriteString(helpStyle.Render("Use ↑/↓ to navigate, ←/→ to change difficulty, Enter to select"))
 
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, sb.String())
 }

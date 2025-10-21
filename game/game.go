@@ -16,6 +16,15 @@ const (
 	GameOverPhase
 )
 
+// Difficulty represents the AI difficulty level
+type Difficulty int
+
+const (
+	Easy Difficulty = iota
+	Normal
+	Hard
+)
+
 // Game represents the game state
 type Game struct {
 	PlayerBoard      *Board
@@ -27,6 +36,7 @@ type Game struct {
 	Winner           string
 	LastMessage      string
 	ClaudeThinking   string
+	Difficulty       Difficulty
 	Random           *rand.Rand
 }
 
@@ -155,19 +165,16 @@ func (g *Game) ComputerAttack() {
 		return
 	}
 
-	// Simple AI: random attacks on unattacked cells
 	var pos Position
-	found := false
 
-	for !found {
-		row := g.Random.Intn(g.BoardSize)
-		col := g.Random.Intn(g.BoardSize)
-		pos = Position{Row: row, Col: col}
-
-		cell := g.PlayerBoard.GetCell(pos)
-		if cell != Hit && cell != Miss {
-			found = true
-		}
+	// Choose attack strategy based on difficulty
+	switch g.Difficulty {
+	case Easy:
+		pos = g.easyAIAttack()
+	case Normal:
+		pos = g.normalAIAttack()
+	case Hard:
+		pos = g.hardAIAttack()
 	}
 
 	hit, ship := g.PlayerBoard.Attack(pos)
@@ -190,4 +197,150 @@ func (g *Game) ComputerAttack() {
 	}
 
 	g.Phase = PlayerTurnPhase
+}
+
+// easyAIAttack implements easy difficulty - random attacks
+func (g *Game) easyAIAttack() Position {
+	var pos Position
+	found := false
+
+	for !found {
+		row := g.Random.Intn(g.BoardSize)
+		col := g.Random.Intn(g.BoardSize)
+		pos = Position{Row: row, Col: col}
+
+		cell := g.PlayerBoard.GetCell(pos)
+		if cell != Hit && cell != Miss {
+			found = true
+		}
+	}
+
+	return pos
+}
+
+// normalAIAttack implements normal difficulty - hunts around hits
+func (g *Game) normalAIAttack() Position {
+	// First, look for existing hits to follow up on
+	for row := 0; row < g.BoardSize; row++ {
+		for col := 0; col < g.BoardSize; col++ {
+			if g.PlayerBoard.Grid[row][col] == Hit {
+				// Found a hit, try adjacent cells
+				adjacents := []Position{
+					{Row: row - 1, Col: col},
+					{Row: row + 1, Col: col},
+					{Row: row, Col: col - 1},
+					{Row: row, Col: col + 1},
+				}
+
+				// Shuffle adjacents for variety
+				for i := range adjacents {
+					j := g.Random.Intn(i + 1)
+					adjacents[i], adjacents[j] = adjacents[j], adjacents[i]
+				}
+
+				for _, adj := range adjacents {
+					if g.PlayerBoard.IsValidPosition(adj) {
+						cell := g.PlayerBoard.GetCell(adj)
+						if cell != Hit && cell != Miss {
+							return adj
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// No hits to follow up on, attack randomly
+	return g.easyAIAttack()
+}
+
+// hardAIAttack implements hard difficulty - smart pattern hunting and direction following
+func (g *Game) hardAIAttack() Position {
+	// Look for hits in a line (ship orientation detected)
+	for row := 0; row < g.BoardSize; row++ {
+		for col := 0; col < g.BoardSize; col++ {
+			if g.PlayerBoard.Grid[row][col] == Hit {
+				// Check horizontal line
+				if col+1 < g.BoardSize && g.PlayerBoard.Grid[row][col+1] == Hit {
+					// Found horizontal ship, extend in both directions
+					// Try right first
+					if col+2 < g.BoardSize {
+						adj := Position{Row: row, Col: col + 2}
+						cell := g.PlayerBoard.GetCell(adj)
+						if cell != Hit && cell != Miss {
+							return adj
+						}
+					}
+					// Try left
+					if col-1 >= 0 {
+						adj := Position{Row: row, Col: col - 1}
+						cell := g.PlayerBoard.GetCell(adj)
+						if cell != Hit && cell != Miss {
+							return adj
+						}
+					}
+				}
+
+				// Check vertical line
+				if row+1 < g.BoardSize && g.PlayerBoard.Grid[row+1][col] == Hit {
+					// Found vertical ship, extend in both directions
+					// Try down first
+					if row+2 < g.BoardSize {
+						adj := Position{Row: row + 2, Col: col}
+						cell := g.PlayerBoard.GetCell(adj)
+						if cell != Hit && cell != Miss {
+							return adj
+						}
+					}
+					// Try up
+					if row-1 >= 0 {
+						adj := Position{Row: row - 1, Col: col}
+						cell := g.PlayerBoard.GetCell(adj)
+						if cell != Hit && cell != Miss {
+							return adj
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// No line detected, use normal mode's adjacent hunting
+	for row := 0; row < g.BoardSize; row++ {
+		for col := 0; col < g.BoardSize; col++ {
+			if g.PlayerBoard.Grid[row][col] == Hit {
+				adjacents := []Position{
+					{Row: row - 1, Col: col},
+					{Row: row + 1, Col: col},
+					{Row: row, Col: col - 1},
+					{Row: row, Col: col + 1},
+				}
+
+				for _, adj := range adjacents {
+					if g.PlayerBoard.IsValidPosition(adj) {
+						cell := g.PlayerBoard.GetCell(adj)
+						if cell != Hit && cell != Miss {
+							return adj
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// No hits to follow, use checkerboard pattern for efficient hunting
+	for row := 0; row < g.BoardSize; row++ {
+		for col := 0; col < g.BoardSize; col++ {
+			if (row+col)%2 == 0 { // Checkerboard pattern
+				pos := Position{Row: row, Col: col}
+				cell := g.PlayerBoard.GetCell(pos)
+				if cell != Hit && cell != Miss {
+					return pos
+				}
+			}
+		}
+	}
+
+	// Checkerboard exhausted, fill in remaining cells
+	return g.easyAIAttack()
 }
