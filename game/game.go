@@ -9,7 +9,8 @@ import (
 type GamePhase int
 
 const (
-	PlacementPhase GamePhase = iota
+	MainMenuPhase GamePhase = iota
+	PlacementPhase
 	PlayerTurnPhase
 	ComputerTurnPhase
 	GameOverPhase
@@ -17,15 +18,32 @@ const (
 
 // Game represents the game state
 type Game struct {
-	PlayerBoard   *Board
-	ComputerBoard *Board
-	Phase         GamePhase
-	BoardSize     int
-	CurrentShip   int // For placement phase
-	ShipTypes     []ShipType
-	Winner        string
-	LastMessage   string
-	Random        *rand.Rand
+	PlayerBoard      *Board
+	ComputerBoard    *Board
+	Phase            GamePhase
+	BoardSize        int
+	CurrentShip      int // For placement phase
+	ShipTypes        []ShipType
+	Winner           string
+	LastMessage      string
+	ClaudeThinking   string
+	Random           *rand.Rand
+}
+
+// Claude thinking messages
+var thinkingMessages = []string{
+	"Pondering",
+	"Hatching a plan",
+	"Simmering",
+	"Meandering",
+	"Contemplating",
+	"Channelling",
+	"Strategizing",
+	"Calculating",
+	"Analyzing",
+	"Reasoning",
+	"Deliberating",
+	"Ruminating",
 }
 
 // NewGame creates a new game
@@ -122,7 +140,13 @@ func (g *Game) PlayerAttack(pos Position) bool {
 	}
 
 	g.Phase = ComputerTurnPhase
+	g.ClaudeThinking = g.GetRandomThinkingMessage()
 	return true
+}
+
+// GetRandomThinkingMessage returns a random thinking message for Claude
+func (g *Game) GetRandomThinkingMessage() string {
+	return thinkingMessages[g.Random.Intn(len(thinkingMessages))]
 }
 
 // ComputerAttack performs a computer attack on the player's board

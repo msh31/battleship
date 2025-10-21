@@ -77,9 +77,41 @@ var (
 			Foreground(titleCyan).
 			Bold(true).
 			Padding(0, 2)
+
+	menuTitleStyle = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(titleCyan).
+			Padding(1, 0).
+			Align(lipgloss.Center).
+			Width(80)
+
+	menuItemStyle = lipgloss.NewStyle().
+			Padding(0, 4).
+			Foreground(lipgloss.Color("#CCCCCC"))
+
+	selectedMenuItemStyle = menuItemStyle.Copy().
+				Foreground(cursorYellow).
+				Bold(true).
+				Border(lipgloss.RoundedBorder()).
+				BorderForeground(cursorYellow).
+				Padding(0, 3)
+
+	asciiArtStyle = lipgloss.NewStyle().
+			Foreground(oceanBlue).
+			Align(lipgloss.Center)
+
+	claudeThinkingStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("#FF9500")).
+				Bold(true).
+				Italic(true).
+				Padding(0, 2)
 )
 
 func renderGame(m Model) string {
+	if m.game.Phase == game.MainMenuPhase {
+		return renderMainMenu(m)
+	}
+
 	var sb strings.Builder
 
 	// Title
@@ -110,6 +142,35 @@ func renderGame(m Model) string {
 	return sb.String()
 }
 
+func renderMainMenu(m Model) string {
+	var sb strings.Builder
+
+	// Title
+	sb.WriteString("\n\n")
+	sb.WriteString(menuTitleStyle.Render("⚓  B A T T L E S H I P  ⚓"))
+	sb.WriteString("\n\n")
+
+	// ASCII Art
+	sb.WriteString(asciiArtStyle.Render(menuBattleshipsArt))
+	sb.WriteString("\n\n")
+
+	// Menu items
+	items := []string{"▶  Start New Game", "✕  Quit"}
+	for i, item := range items {
+		if i == m.menuSelection {
+			sb.WriteString(selectedMenuItemStyle.Render(item))
+		} else {
+			sb.WriteString(menuItemStyle.Render(item))
+		}
+		sb.WriteString("\n\n")
+	}
+
+	sb.WriteString("\n")
+	sb.WriteString(helpStyle.Render("Use ↑/↓ or W/S to navigate, Enter to select"))
+
+	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, sb.String())
+}
+
 func renderPhaseMessage(m Model) string {
 	msg := ""
 
@@ -127,7 +188,8 @@ func renderPhaseMessage(m Model) string {
 	case game.PlayerTurnPhase:
 		msg = "Your turn! Select a target and fire!"
 	case game.ComputerTurnPhase:
-		msg = "Claude is thinking..."
+		claudeMsg := m.game.ClaudeThinking + "..."
+		return claudeThinkingStyle.Render("Captain Claude is " + claudeMsg)
 	case game.GameOverPhase:
 		msg = fmt.Sprintf("Game Over! %s wins!", m.game.Winner)
 	}

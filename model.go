@@ -17,6 +17,7 @@ type Model struct {
 	computerThinking   bool
 	width              int
 	height             int
+	menuSelection      int
 }
 
 // computerTurnMsg is sent after a delay to simulate computer thinking
@@ -29,12 +30,15 @@ func computerTurn() tea.Msg {
 
 // InitialModel creates the initial model
 func InitialModel() Model {
+	g := game.NewGame(10)
+	g.Phase = game.MainMenuPhase
 	return Model{
-		game:            game.NewGame(10),
+		game:            g,
 		cursorRow:       0,
 		cursorCol:       0,
 		shipOrientation: game.Horizontal,
-		showHelp:        true,
+		showHelp:        false,
+		menuSelection:   0,
 	}
 }
 
@@ -78,13 +82,21 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		case "up", "w":
-			if m.cursorRow > 0 {
+			if m.game.Phase == game.MainMenuPhase {
+				if m.menuSelection > 0 {
+					m.menuSelection--
+				}
+			} else if m.cursorRow > 0 {
 				m.cursorRow--
 			}
 			return m, nil
 
 		case "down", "s":
-			if m.cursorRow < m.game.BoardSize-1 {
+			if m.game.Phase == game.MainMenuPhase {
+				if m.menuSelection < 1 { // 0 = Play, 1 = Quit
+					m.menuSelection++
+				}
+			} else if m.cursorRow < m.game.BoardSize-1 {
 				m.cursorRow++
 			}
 			return m, nil
@@ -125,6 +137,21 @@ func (m Model) handleAction() (tea.Model, tea.Cmd) {
 	pos := game.Position{Row: m.cursorRow, Col: m.cursorCol}
 
 	switch m.game.Phase {
+	case game.MainMenuPhase:
+		if m.menuSelection == 0 {
+			// Start new game
+			m.game = game.NewGame(10)
+			m.cursorRow = 0
+			m.cursorCol = 0
+			m.shipOrientation = game.Horizontal
+			m.showHelp = true
+			m.computerThinking = false
+		} else {
+			// Quit
+			return m, tea.Quit
+		}
+		return m, nil
+
 	case game.PlacementPhase:
 		m.game.PlacePlayerShip(pos, m.shipOrientation)
 		return m, nil
