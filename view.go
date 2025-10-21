@@ -156,9 +156,21 @@ func renderMainMenu(m Model) string {
 
 	// Difficulty selection
 	difficultyNames := []string{"Easy", "Normal", "Hard"}
+	difficultyDescriptions := []string{
+		"Random attacks",
+		"Hunts around hits",
+		"Smart targeting with patterns",
+	}
 	difficultyText := fmt.Sprintf("◀  Difficulty: %s  ▶", difficultyNames[m.selectedDifficulty])
 	if m.menuSelection == 0 {
 		sb.WriteString(selectedMenuItemStyle.Render(difficultyText))
+		sb.WriteString("\n")
+		// Show description when selected
+		descStyle := lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#888888")).
+			Italic(true).
+			Padding(0, 4)
+		sb.WriteString(descStyle.Render(difficultyDescriptions[m.selectedDifficulty]))
 	} else {
 		sb.WriteString(menuItemStyle.Render(difficultyText))
 	}
