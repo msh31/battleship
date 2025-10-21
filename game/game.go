@@ -172,7 +172,7 @@ func (g *Game) ComputerAttack() {
 	case Easy:
 		pos = g.easyAIAttack()
 	case Normal:
-		pos = g.easyAIAttack() // Will implement proper logic next
+		pos = g.normalAIAttack()
 	case Hard:
 		pos = g.easyAIAttack() // Will implement proper logic next
 	}
@@ -216,4 +216,40 @@ func (g *Game) easyAIAttack() Position {
 	}
 
 	return pos
+}
+
+// normalAIAttack implements normal difficulty - hunts around hits
+func (g *Game) normalAIAttack() Position {
+	// First, look for existing hits to follow up on
+	for row := 0; row < g.BoardSize; row++ {
+		for col := 0; col < g.BoardSize; col++ {
+			if g.PlayerBoard.Grid[row][col] == Hit {
+				// Found a hit, try adjacent cells
+				adjacents := []Position{
+					{Row: row - 1, Col: col},
+					{Row: row + 1, Col: col},
+					{Row: row, Col: col - 1},
+					{Row: row, Col: col + 1},
+				}
+
+				// Shuffle adjacents for variety
+				for i := range adjacents {
+					j := g.Random.Intn(i + 1)
+					adjacents[i], adjacents[j] = adjacents[j], adjacents[i]
+				}
+
+				for _, adj := range adjacents {
+					if g.PlayerBoard.IsValidPosition(adj) {
+						cell := g.PlayerBoard.GetCell(adj)
+						if cell != Hit && cell != Miss {
+							return adj
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// No hits to follow up on, attack randomly
+	return g.easyAIAttack()
 }
