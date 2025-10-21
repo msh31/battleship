@@ -1,0 +1,9 @@
+# Binaries
+battleship
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
