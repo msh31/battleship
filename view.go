@@ -59,6 +59,11 @@ var (
 			Background(darkBlue).
 			Bold(true)
 
+	grayCursorStyle = cellStyle.Copy().
+			Foreground(lipgloss.Color("#888888")).
+			Background(darkBlue).
+			Bold(true)
+
 	messageStyle = lipgloss.NewStyle().
 			Foreground(successGreen).
 			Bold(true).
@@ -310,14 +315,14 @@ func renderCell(cell game.CellState, isCursor bool, isPreview bool, showShips bo
 	case game.Hit:
 		symbol = "X"
 		if isCursor {
-			return cursorStyle.Render("[" + symbol + "]")
+			return grayCursorStyle.Render("[" + symbol + "]")
 		}
 		return hitStyle.Render(" " + symbol + " ")
 
 	case game.Miss:
 		symbol = "○"
 		if isCursor {
-			return cursorStyle.Render("[" + symbol + "]")
+			return grayCursorStyle.Render("[" + symbol + "]")
 		}
 		return missStyle.Render(" " + symbol + " ")
 	}
