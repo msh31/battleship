@@ -127,7 +127,7 @@ func renderPhaseMessage(m Model) string {
 	case game.PlayerTurnPhase:
 		msg = "Your turn! Select a target and fire!"
 	case game.ComputerTurnPhase:
-		msg = "Computer is thinking..."
+		msg = "Claude is thinking..."
 	case game.GameOverPhase:
 		msg = fmt.Sprintf("Game Over! %s wins!", m.game.Winner)
 	}
