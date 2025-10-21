@@ -106,7 +106,7 @@ func (g *Game) PlayerAttack(pos Position) bool {
 
 	if hit {
 		if ship != nil && ship.IsSunk() {
-			g.LastMessage = "Hit! You sunk the enemy's " + ship.Name + "!"
+			g.LastMessage = "Hit! You sunk Captain Claude's " + ship.Name + "!"
 		} else {
 			g.LastMessage = "Hit!"
 		}
@@ -114,7 +114,7 @@ func (g *Game) PlayerAttack(pos Position) bool {
 		if g.ComputerBoard.AllShipsSunk() {
 			g.Phase = GameOverPhase
 			g.Winner = "Player"
-			g.LastMessage = "Victory! You sunk all enemy ships!"
+			g.LastMessage = "Victory! You sunk Captain Claude's fleet!"
 			return true
 		}
 	} else {
