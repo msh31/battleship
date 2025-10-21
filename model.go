@@ -18,6 +18,7 @@ type Model struct {
 	width              int
 	height             int
 	menuSelection      int
+	selectedDifficulty game.Difficulty
 }
 
 // computerTurnMsg is sent after a delay to simulate computer thinking
@@ -93,7 +94,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "down", "s":
 			if m.game.Phase == game.MainMenuPhase {
-				if m.menuSelection < 1 { // 0 = Play, 1 = Quit
+				if m.menuSelection < 2 { // 0 = Difficulty, 1 = Play, 2 = Quit
 					m.menuSelection++
 				}
 			} else if m.cursorRow < m.game.BoardSize-1 {
@@ -102,13 +103,27 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		case "left", "a":
-			if m.cursorCol > 0 {
+			if m.game.Phase == game.MainMenuPhase && m.menuSelection == 0 {
+				// Cycle difficulty left
+				if m.selectedDifficulty == game.Easy {
+					m.selectedDifficulty = game.Hard
+				} else {
+					m.selectedDifficulty--
+				}
+			} else if m.cursorCol > 0 {
 				m.cursorCol--
 			}
 			return m, nil
 
 		case "right", "d":
-			if m.cursorCol < m.game.BoardSize-1 {
+			if m.game.Phase == game.MainMenuPhase && m.menuSelection == 0 {
+				// Cycle difficulty right
+				if m.selectedDifficulty == game.Hard {
+					m.selectedDifficulty = game.Easy
+				} else {
+					m.selectedDifficulty++
+				}
+			} else if m.cursorCol < m.game.BoardSize-1 {
 				m.cursorCol++
 			}
 			return m, nil
@@ -139,8 +154,12 @@ func (m Model) handleAction() (tea.Model, tea.Cmd) {
 	switch m.game.Phase {
 	case game.MainMenuPhase:
 		if m.menuSelection == 0 {
+			// Difficulty selection - do nothing, just cycle with arrow keys
+			return m, nil
+		} else if m.menuSelection == 1 {
 			// Start new game
 			m.game = game.NewGame(10)
+			m.game.Difficulty = m.selectedDifficulty
 			m.cursorRow = 0
 			m.cursorCol = 0
 			m.shipOrientation = game.Horizontal

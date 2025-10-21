@@ -16,6 +16,15 @@ const (
 	GameOverPhase
 )
 
+// Difficulty represents the AI difficulty level
+type Difficulty int
+
+const (
+	Easy Difficulty = iota
+	Normal
+	Hard
+)
+
 // Game represents the game state
 type Game struct {
 	PlayerBoard      *Board
@@ -27,6 +36,7 @@ type Game struct {
 	Winner           string
 	LastMessage      string
 	ClaudeThinking   string
+	Difficulty       Difficulty
 	Random           *rand.Rand
 }
 
@@ -155,7 +165,42 @@ func (g *Game) ComputerAttack() {
 		return
 	}
 
-	// Simple AI: random attacks on unattacked cells
+	var pos Position
+
+	// Choose attack strategy based on difficulty
+	switch g.Difficulty {
+	case Easy:
+		pos = g.easyAIAttack()
+	case Normal:
+		pos = g.easyAIAttack() // Will implement proper logic next
+	case Hard:
+		pos = g.easyAIAttack() // Will implement proper logic next
+	}
+
+	hit, ship := g.PlayerBoard.Attack(pos)
+
+	if hit {
+		if ship != nil && ship.IsSunk() {
+			g.LastMessage = "Claude sunk your " + ship.Name + "!"
+		} else {
+			g.LastMessage = "Claude hit your ship!"
+		}
+
+		if g.PlayerBoard.AllShipsSunk() {
+			g.Phase = GameOverPhase
+			g.Winner = "Claude"
+			g.LastMessage = "Defeat! All your ships were sunk!"
+			return
+		}
+	} else {
+		g.LastMessage = "Claude missed!"
+	}
+
+	g.Phase = PlayerTurnPhase
+}
+
+// easyAIAttack implements easy difficulty - random attacks
+func (g *Game) easyAIAttack() Position {
 	var pos Position
 	found := false
 
@@ -170,24 +215,5 @@ func (g *Game) ComputerAttack() {
 		}
 	}
 
-	hit, ship := g.PlayerBoard.Attack(pos)
-
-	if hit {
-		if ship != nil && ship.IsSunk() {
-			g.LastMessage = "Computer sunk your " + ship.Name + "!"
-		} else {
-			g.LastMessage = "Computer hit your ship!"
-		}
-
-		if g.PlayerBoard.AllShipsSunk() {
-			g.Phase = GameOverPhase
-			g.Winner = "Computer"
-			g.LastMessage = "Defeat! All your ships were sunk!"
-			return
-		}
-	} else {
-		g.LastMessage = "Computer missed!"
-	}
-
-	g.Phase = PlayerTurnPhase
+	return pos
 }
