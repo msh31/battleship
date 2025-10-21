@@ -425,6 +425,26 @@ func renderGameOver(m Model) string {
 		Border(lipgloss.DoubleBorder())
 
 	sb.WriteString(gameOverStyle.Render(gameOverMsg))
+	sb.WriteString("\n\n")
+
+	// Stats display
+	difficultyNames := []string{"Easy", "Normal", "Hard"}
+	diffName := difficultyNames[m.game.Difficulty]
+	wins := m.stats.GetWins(m.game.Difficulty)
+	losses := m.stats.GetLosses(m.game.Difficulty)
+	total := m.stats.GetTotalGames(m.game.Difficulty)
+	winRate := m.stats.GetWinRate(m.game.Difficulty)
+
+	statsText := fmt.Sprintf("%s Mode Stats: %d-%d (%.1f%% win rate) - %d total games",
+		diffName, wins, losses, winRate, total)
+
+	statsStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#888888")).
+		Padding(0, 2)
+
+	sb.WriteString(statsStyle.Render(statsText))
+	sb.WriteString("\n\n")
+	sb.WriteString(helpStyle.Render("Press R to restart or Q to quit"))
 
 	return sb.String()
 }

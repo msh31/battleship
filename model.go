@@ -19,6 +19,7 @@ type Model struct {
 	height             int
 	menuSelection      int
 	selectedDifficulty game.Difficulty
+	stats              *Stats
 }
 
 // computerTurnMsg is sent after a delay to simulate computer thinking
@@ -33,6 +34,10 @@ func computerTurn() tea.Msg {
 func InitialModel() Model {
 	g := game.NewGame(10)
 	g.Phase = game.MainMenuPhase
+	stats, _ := LoadStats()
+	if stats == nil {
+		stats = &Stats{}
+	}
 	return Model{
 		game:            g,
 		cursorRow:       0,
@@ -40,6 +45,7 @@ func InitialModel() Model {
 		shipOrientation: game.Horizontal,
 		showHelp:        false,
 		menuSelection:   0,
+		stats:           stats,
 	}
 }
 
@@ -60,6 +66,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.game.Phase == game.ComputerTurnPhase {
 			m.game.ComputerAttack()
 			m.computerThinking = false
+			// Check if game ended after computer's attack
+			if m.game.Phase == game.GameOverPhase && m.game.Winner == "Claude" {
+				m.stats.RecordLoss(m.game.Difficulty)
+			}
 		}
 		return m, nil
 
@@ -177,6 +187,11 @@ func (m Model) handleAction() (tea.Model, tea.Cmd) {
 
 	case game.PlayerTurnPhase:
 		if m.game.PlayerAttack(pos) {
+			// Check if player won
+			if m.game.Phase == game.GameOverPhase && m.game.Winner == "Player" {
+				m.stats.RecordWin(m.game.Difficulty)
+				return m, nil
+			}
 			if m.game.Phase == game.ComputerTurnPhase {
 				m.computerThinking = true
 				return m, computerTurn
