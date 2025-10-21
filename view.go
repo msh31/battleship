@@ -300,7 +300,11 @@ func renderCell(cell game.CellState, isCursor bool, isPreview bool, showShips bo
 			symbol = "█"
 			return shipStyle.Render(" " + symbol + " ")
 		}
+		// For hidden enemy ships, show cursor if applicable
 		symbol = "~"
+		if isCursor {
+			return cursorStyle.Render("[" + symbol + "]")
+		}
 		return waterStyle.Render(" " + symbol + " ")
 
 	case game.Hit:
