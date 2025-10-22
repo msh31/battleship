@@ -315,6 +315,8 @@ func renderBattleBoards(m Model) string {
 func renderPlayerBoard(m Model) string {
 	var sb strings.Builder
 
+	sb.WriteString(asciiArtStyle.Render(battleshipArt))
+	sb.WriteString("\n")
 	sb.WriteString(headerStyle.Render("Your Fleet"))
 	sb.WriteString("\n\n")
 
@@ -344,7 +346,9 @@ func renderPlayerBoard(m Model) string {
 func renderEnemyBoard(m Model) string {
 	var sb strings.Builder
 
-	sb.WriteString(headerStyle.Render("Enemy Waters"))
+	sb.WriteString(asciiArtStyle.Render(claudeBattleshipArt))
+	sb.WriteString("\n")
+	sb.WriteString(headerStyle.Render("Captain Claude's Fleet"))
 	sb.WriteString("\n\n")
 
 	// Column headers
