@@ -9,21 +9,24 @@ import (
 
 // Model represents the bubbletea model for the game
 type Model struct {
-	game               *game.Game
-	cursorRow          int
-	cursorCol          int
-	shipOrientation    game.Orientation
-	showHelp           bool
-	computerThinking   bool
-	width              int
-	height             int
-	menuSelection      int
-	selectedDifficulty game.Difficulty
-	selectedBoardSize  int
-	selectedSalvoMode  bool
-	showAnimation      bool
-	animationType      string // "hit" or "miss"
-	lastAttackPos      game.Position
+	game                *game.Game
+	cursorRow           int
+	cursorCol           int
+	shipOrientation     game.Orientation
+	showHelp            bool
+	computerThinking    bool
+	width               int
+	height              int
+	menuSelection       int
+	selectedDifficulty  game.Difficulty
+	selectedBoardSize   int
+	selectedSalvoMode   bool
+	showAnimation       bool
+	animationType       string // "hit" or "miss"
+	lastAttackPos       game.Position
+	achievements        *Achievements
+	newlyUnlocked       []Achievement
+	showAchievementsMenu bool
 }
 
 // computerTurnMsg is sent after a delay to simulate computer thinking
@@ -54,6 +57,7 @@ func InitialModel() Model {
 		showHelp:          false,
 		menuSelection:     0,
 		selectedBoardSize: 10,
+		achievements:      LoadAchievements(),
 	}
 }
 
@@ -74,6 +78,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.game.Phase == game.ComputerTurnPhase {
 			m.game.ComputerAttack()
 			m.computerThinking = false
+
+			// Check for achievements if game ended
+			if m.game.Phase == game.GameOverPhase {
+				m.newlyUnlocked = m.achievements.CheckAndUnlock(m.game)
+			}
 		}
 		return m, nil
 
@@ -197,6 +206,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.game.Phase == game.PlayerTurnPhase && m.game.SalvoMode {
 				if len(m.game.PlayerSalvo) > 0 {
 					m.game.ExecutePlayerSalvo()
+
+					// Check for achievements if game ended (player won)
+					if m.game.Phase == game.GameOverPhase {
+						m.newlyUnlocked = m.achievements.CheckAndUnlock(m.game)
+					}
+
 					if m.game.Phase == game.ComputerTurnPhase {
 						m.computerThinking = true
 						return m, computerTurn
@@ -255,6 +270,11 @@ func (m Model) handleAction() (tea.Model, tea.Cmd) {
 				} else {
 					m.animationType = "miss"
 				}
+			}
+
+			// Check for achievements if game ended (player won)
+			if m.game.Phase == game.GameOverPhase {
+				m.newlyUnlocked = m.achievements.CheckAndUnlock(m.game)
 			}
 
 			if m.game.Phase == game.ComputerTurnPhase {

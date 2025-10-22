@@ -502,6 +502,35 @@ func renderGameOver(m Model) string {
 		Border(lipgloss.DoubleBorder())
 
 	sb.WriteString(gameOverStyle.Render(gameOverMsg))
+	sb.WriteString("\n\n")
+
+	// Show newly unlocked achievements
+	if len(m.newlyUnlocked) > 0 {
+		achievementStyle := lipgloss.NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color("#FFD700")).
+			Padding(0, 2)
+
+		sb.WriteString(achievementStyle.Render("🏆 NEW ACHIEVEMENTS UNLOCKED! 🏆"))
+		sb.WriteString("\n\n")
+
+		for _, ach := range m.newlyUnlocked {
+			achBox := lipgloss.NewStyle().
+				Foreground(lipgloss.Color("#FFD700")).
+				Border(lipgloss.RoundedBorder()).
+				BorderForeground(lipgloss.Color("#FFD700")).
+				Padding(0, 1).
+				Width(40)
+
+			achText := fmt.Sprintf("⭐ %s\n   %s", ach.Name, ach.Description)
+			sb.WriteString(achBox.Render(achText))
+			sb.WriteString("\n")
+		}
+		sb.WriteString("\n")
+	}
+
+	// Show instructions
+	sb.WriteString(helpStyle.Render("Press R to restart | Press Q to quit"))
 
 	return sb.String()
 }
