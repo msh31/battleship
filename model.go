@@ -21,6 +21,9 @@ type Model struct {
 	selectedDifficulty game.Difficulty
 	selectedBoardSize  int
 	selectedSalvoMode  bool
+	showAnimation      bool
+	animationType      string // "hit" or "miss"
+	lastAttackPos      game.Position
 }
 
 // computerTurnMsg is sent after a delay to simulate computer thinking
@@ -29,6 +32,14 @@ type computerTurnMsg struct{}
 func computerTurn() tea.Msg {
 	time.Sleep(800 * time.Millisecond)
 	return computerTurnMsg{}
+}
+
+// clearAnimationMsg is sent after a delay to clear animations
+type clearAnimationMsg struct{}
+
+func clearAnimation() tea.Msg {
+	time.Sleep(600 * time.Millisecond)
+	return clearAnimationMsg{}
 }
 
 // InitialModel creates the initial model
@@ -64,6 +75,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.game.ComputerAttack()
 			m.computerThinking = false
 		}
+		return m, nil
+
+	case clearAnimationMsg:
+		m.showAnimation = false
 		return m, nil
 
 	case tea.KeyMsg:
@@ -225,10 +240,34 @@ func (m Model) handleAction() (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case game.PlayerTurnPhase:
+		// Store last attack position for animation
+		m.lastAttackPos = pos
+
+		// Check current cell state to determine if it will be hit or miss
+		cell := m.game.ComputerBoard.GetCell(pos)
+
 		if m.game.PlayerAttack(pos) {
+			// Trigger animation for non-salvo mode
+			if !m.game.SalvoMode {
+				m.showAnimation = true
+				if cell == game.ShipCell {
+					m.animationType = "hit"
+				} else {
+					m.animationType = "miss"
+				}
+			}
+
 			if m.game.Phase == game.ComputerTurnPhase {
 				m.computerThinking = true
-				return m, computerTurn
+				var cmds []tea.Cmd
+				if m.showAnimation {
+					cmds = append(cmds, clearAnimation)
+				}
+				cmds = append(cmds, computerTurn)
+				return m, tea.Batch(cmds...)
+			}
+			if m.showAnimation {
+				return m, clearAnimation
 			}
 		}
 		return m, nil

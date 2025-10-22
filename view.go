@@ -128,6 +128,12 @@ func renderGame(m Model) string {
 	sb.WriteString(renderPhaseMessage(m))
 	sb.WriteString("\n")
 
+	// Show animation if active
+	if m.showAnimation {
+		sb.WriteString(renderAnimation(m))
+		sb.WriteString("\n")
+	}
+
 	// Render boards side by side
 	switch m.game.Phase {
 	case game.PlacementPhase:
@@ -210,6 +216,26 @@ func renderMainMenu(m Model) string {
 	sb.WriteString(helpStyle.Render("Use ↑/↓ to navigate, ←/→ to change options, Enter to select"))
 
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, sb.String())
+}
+
+func renderAnimation(m Model) string {
+	var animationArt string
+	var animationStyle lipgloss.Style
+
+	if m.animationType == "hit" {
+		animationArt = hitAnimationArt
+		animationStyle = lipgloss.NewStyle().
+			Foreground(hitRed).
+			Bold(true).
+			Align(lipgloss.Center)
+	} else {
+		animationArt = missAnimationArt
+		animationStyle = lipgloss.NewStyle().
+			Foreground(oceanBlue).
+			Align(lipgloss.Center)
+	}
+
+	return animationStyle.Render(animationArt)
 }
 
 func renderPhaseMessage(m Model) string {
