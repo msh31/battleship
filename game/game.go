@@ -264,6 +264,19 @@ func (g *Game) PlayerAttack(pos Position) bool {
 		return g.QueueSalvoShot(pos)
 	}
 
+	// Validate position
+	if !g.ComputerBoard.IsValidPosition(pos) {
+		g.LastMessage = "Invalid position!"
+		return false
+	}
+
+	// Prevent attacking the same coordinate twice
+	cell := g.ComputerBoard.GetCell(pos)
+	if cell == Hit || cell == Miss {
+		g.LastMessage = "You already attacked that position!"
+		return false
+	}
+
 	hit, ship := g.ComputerBoard.Attack(pos)
 
 	if hit {
