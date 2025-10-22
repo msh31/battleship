@@ -38,6 +38,9 @@ type Game struct {
 	ClaudeThinking   string
 	Difficulty       Difficulty
 	Random           *rand.Rand
+	SalvoMode        bool       // Enable salvo mode (multiple shots per turn)
+	PlayerSalvo      []Position // Queued shots for player
+	SalvoMessages    []string   // Messages from salvo attacks
 }
 
 // Claude thinking messages
@@ -125,9 +128,140 @@ func (g *Game) GetCurrentShipForPlacement() *Ship {
 }
 
 // PlayerAttack performs a player attack on the computer's board
+// GetRemainingShips returns the number of unsunk ships for a board
+func (g *Game) GetRemainingShips(playerBoard bool) int {
+	board := g.ComputerBoard
+	if playerBoard {
+		board = g.PlayerBoard
+	}
+
+	count := 0
+	for _, ship := range board.Ships {
+		if !ship.IsSunk() {
+			count++
+		}
+	}
+	return count
+}
+
+// GetSalvoShotsRemaining returns how many more shots the player can queue
+func (g *Game) GetSalvoShotsRemaining() int {
+	if !g.SalvoMode {
+		return 0
+	}
+	maxShots := g.GetRemainingShips(true)
+	return maxShots - len(g.PlayerSalvo)
+}
+
+// IsValidSalvoTarget checks if a position is a valid target for salvo
+func (g *Game) IsValidSalvoTarget(pos Position) bool {
+	if !g.ComputerBoard.IsValidPosition(pos) {
+		return false
+	}
+
+	cell := g.ComputerBoard.GetCell(pos)
+	if cell == Hit || cell == Miss {
+		return false
+	}
+
+	// Check if already queued
+	for _, queued := range g.PlayerSalvo {
+		if queued.Row == pos.Row && queued.Col == pos.Col {
+			return false
+		}
+	}
+
+	return true
+}
+
+// QueueSalvoShot adds a shot to the player's salvo queue
+func (g *Game) QueueSalvoShot(pos Position) bool {
+	if !g.SalvoMode || g.Phase != PlayerTurnPhase {
+		return false
+	}
+
+	if !g.IsValidSalvoTarget(pos) {
+		return false
+	}
+
+	if g.GetSalvoShotsRemaining() <= 0 {
+		return false
+	}
+
+	g.PlayerSalvo = append(g.PlayerSalvo, pos)
+	return true
+}
+
+// ExecutePlayerSalvo fires all queued shots
+func (g *Game) ExecutePlayerSalvo() {
+	if !g.SalvoMode || len(g.PlayerSalvo) == 0 {
+		return
+	}
+
+	g.SalvoMessages = []string{}
+	hits := 0
+	misses := 0
+	sunkShips := []string{}
+
+	for _, pos := range g.PlayerSalvo {
+		hit, ship := g.ComputerBoard.Attack(pos)
+
+		if hit {
+			hits++
+			if ship != nil && ship.IsSunk() {
+				sunkShips = append(sunkShips, ship.Name)
+			}
+		} else {
+			misses++
+		}
+	}
+
+	// Build message
+	msg := ""
+	if hits > 0 {
+		msg += "Hits: " + string(rune('0'+hits))
+	}
+	if misses > 0 {
+		if msg != "" {
+			msg += " | "
+		}
+		msg += "Misses: " + string(rune('0'+misses))
+	}
+	if len(sunkShips) > 0 {
+		if msg != "" {
+			msg += " | "
+		}
+		msg += "Sunk: "
+		for i, name := range sunkShips {
+			if i > 0 {
+				msg += ", "
+			}
+			msg += name
+		}
+	}
+
+	g.LastMessage = msg
+	g.PlayerSalvo = []Position{}
+
+	if g.ComputerBoard.AllShipsSunk() {
+		g.Phase = GameOverPhase
+		g.Winner = "Player"
+		g.LastMessage = "Victory! You sunk all enemy ships!"
+		return
+	}
+
+	g.Phase = ComputerTurnPhase
+	g.ClaudeThinking = g.GetRandomThinkingMessage()
+}
+
 func (g *Game) PlayerAttack(pos Position) bool {
 	if g.Phase != PlayerTurnPhase {
 		return false
+	}
+
+	// In salvo mode, queue the shot instead of attacking immediately
+	if g.SalvoMode {
+		return g.QueueSalvoShot(pos)
 	}
 
 	hit, ship := g.ComputerBoard.Attack(pos)
@@ -165,6 +299,11 @@ func (g *Game) ComputerAttack() {
 		return
 	}
 
+	if g.SalvoMode {
+		g.computerSalvoAttack()
+		return
+	}
+
 	var pos Position
 
 	// Choose attack strategy based on difficulty
@@ -194,6 +333,71 @@ func (g *Game) ComputerAttack() {
 		}
 	} else {
 		g.LastMessage = "Claude missed!"
+	}
+
+	g.Phase = PlayerTurnPhase
+}
+
+// computerSalvoAttack performs multiple attacks for salvo mode
+func (g *Game) computerSalvoAttack() {
+	numShots := g.GetRemainingShips(false) // Computer's remaining ships
+	hits := 0
+	misses := 0
+	sunkShips := []string{}
+
+	for i := 0; i < numShots; i++ {
+		var pos Position
+
+		// Choose attack strategy based on difficulty
+		switch g.Difficulty {
+		case Easy:
+			pos = g.easyAIAttack()
+		case Normal:
+			pos = g.normalAIAttack()
+		case Hard:
+			pos = g.hardAIAttack()
+		}
+
+		hit, ship := g.PlayerBoard.Attack(pos)
+
+		if hit {
+			hits++
+			if ship != nil && ship.IsSunk() {
+				sunkShips = append(sunkShips, ship.Name)
+			}
+		} else {
+			misses++
+		}
+	}
+
+	// Build message
+	msg := "Claude's salvo: "
+	if hits > 0 {
+		msg += "Hits: " + string(rune('0'+hits))
+	}
+	if misses > 0 {
+		if hits > 0 {
+			msg += " | "
+		}
+		msg += "Misses: " + string(rune('0'+misses))
+	}
+	if len(sunkShips) > 0 {
+		msg += " | Sunk: "
+		for i, name := range sunkShips {
+			if i > 0 {
+				msg += ", "
+			}
+			msg += name
+		}
+	}
+
+	g.LastMessage = msg
+
+	if g.PlayerBoard.AllShipsSunk() {
+		g.Phase = GameOverPhase
+		g.Winner = "Claude"
+		g.LastMessage = "Defeat! All your ships were sunk!"
+		return
 	}
 
 	g.Phase = PlayerTurnPhase

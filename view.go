@@ -64,6 +64,11 @@ var (
 			Background(darkBlue).
 			Bold(true)
 
+	queuedStyle = cellStyle.Copy().
+			Foreground(lipgloss.Color("#FFA500")).
+			Background(darkBlue).
+			Bold(true)
+
 	messageStyle = lipgloss.NewStyle().
 			Foreground(successGreen).
 			Bold(true).
@@ -154,18 +159,39 @@ func renderMainMenu(m Model) string {
 	sb.WriteString(asciiArtStyle.Render(menuBattleshipsArt))
 	sb.WriteString("\n\n")
 
+	// Board size selection
+	boardSizeText := fmt.Sprintf("◀  Board Size: %dx%d  ▶", m.selectedBoardSize, m.selectedBoardSize)
+	if m.menuSelection == 0 {
+		sb.WriteString(selectedMenuItemStyle.Render(boardSizeText))
+	} else {
+		sb.WriteString(menuItemStyle.Render(boardSizeText))
+	}
+	sb.WriteString("\n\n")
+
 	// Difficulty selection
 	difficultyNames := []string{"Easy", "Normal", "Hard"}
 	difficultyText := fmt.Sprintf("◀  Difficulty: %s  ▶", difficultyNames[m.selectedDifficulty])
-	if m.menuSelection == 0 {
+	if m.menuSelection == 1 {
 		sb.WriteString(selectedMenuItemStyle.Render(difficultyText))
 	} else {
 		sb.WriteString(menuItemStyle.Render(difficultyText))
 	}
 	sb.WriteString("\n\n")
 
+	// Salvo mode selection
+	salvoText := "◀  Salvo Mode: Off  ▶"
+	if m.selectedSalvoMode {
+		salvoText = "◀  Salvo Mode: On  ▶"
+	}
+	if m.menuSelection == 2 {
+		sb.WriteString(selectedMenuItemStyle.Render(salvoText))
+	} else {
+		sb.WriteString(menuItemStyle.Render(salvoText))
+	}
+	sb.WriteString("\n\n")
+
 	// Start game
-	if m.menuSelection == 1 {
+	if m.menuSelection == 3 {
 		sb.WriteString(selectedMenuItemStyle.Render("▶  Start New Game"))
 	} else {
 		sb.WriteString(menuItemStyle.Render("▶  Start New Game"))
@@ -173,7 +199,7 @@ func renderMainMenu(m Model) string {
 	sb.WriteString("\n\n")
 
 	// Quit
-	if m.menuSelection == 2 {
+	if m.menuSelection == 4 {
 		sb.WriteString(selectedMenuItemStyle.Render("✕  Quit"))
 	} else {
 		sb.WriteString(menuItemStyle.Render("✕  Quit"))
@@ -181,7 +207,7 @@ func renderMainMenu(m Model) string {
 	sb.WriteString("\n\n")
 
 	sb.WriteString("\n")
-	sb.WriteString(helpStyle.Render("Use ↑/↓ to navigate, ←/→ to change difficulty, Enter to select"))
+	sb.WriteString(helpStyle.Render("Use ↑/↓ to navigate, ←/→ to change options, Enter to select"))
 
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, sb.String())
 }
@@ -201,7 +227,13 @@ func renderPhaseMessage(m Model) string {
 				ship.Name, ship.Length, orientation)
 		}
 	case game.PlayerTurnPhase:
-		msg = "Your turn! Select a target and fire!"
+		if m.game.SalvoMode {
+			shotsRemaining := m.game.GetSalvoShotsRemaining()
+			queued := len(m.game.PlayerSalvo)
+			msg = fmt.Sprintf("Salvo Mode: %d/%d shots queued (Press F to Fire)", queued, queued+shotsRemaining)
+		} else {
+			msg = "Your turn! Select a target and fire!"
+		}
 	case game.ComputerTurnPhase:
 		claudeMsg := m.game.ClaudeThinking + "..."
 		return claudeThinkingStyle.Render("Captain Claude is " + claudeMsg)
@@ -306,6 +338,8 @@ func renderBattleBoards(m Model) string {
 func renderPlayerBoard(m Model) string {
 	var sb strings.Builder
 
+	sb.WriteString(asciiArtStyle.Render(battleshipArt))
+	sb.WriteString("\n")
 	sb.WriteString(headerStyle.Render("Your Fleet"))
 	sb.WriteString("\n\n")
 
@@ -335,6 +369,8 @@ func renderPlayerBoard(m Model) string {
 func renderEnemyBoard(m Model) string {
 	var sb strings.Builder
 
+	sb.WriteString(asciiArtStyle.Render(claudeBattleshipArt))
+	sb.WriteString("\n")
 	sb.WriteString(headerStyle.Render("Captain Claude's Fleet"))
 	sb.WriteString("\n\n")
 
@@ -354,7 +390,17 @@ func renderEnemyBoard(m Model) string {
 			cell := m.game.ComputerBoard.GetCell(pos)
 
 			isCursor := row == m.cursorRow && col == m.cursorCol
-			cellStr := renderCell(cell, isCursor, false, false)
+
+			// Check if this position is queued for salvo
+			isQueued := false
+			for _, queued := range m.game.PlayerSalvo {
+				if queued.Row == row && queued.Col == col {
+					isQueued = true
+					break
+				}
+			}
+
+			cellStr := renderCell(cell, isCursor, isQueued, false)
 			sb.WriteString(cellStr)
 		}
 		sb.WriteString("\n")
@@ -373,7 +419,8 @@ func renderCell(cell game.CellState, isCursor bool, isPreview bool, showShips bo
 			return cursorStyle.Render("[" + symbol + "]")
 		}
 		if isPreview {
-			return shipStyle.Render("▓")
+			// In salvo mode, isPreview is used for queued shots
+			return queuedStyle.Render("[◎]")
 		}
 		return waterStyle.Render(" " + symbol + " ")
 
