@@ -120,7 +120,7 @@ func renderGame(m Model) string {
 	var sb strings.Builder
 
 	// Title
-	title := titleStyle.Render("⚓ BATTLESHIP ⚓")
+	title := titleStyle.Render("BATTLESHIP")
 	sb.WriteString(title)
 	sb.WriteString("\n\n")
 
@@ -152,7 +152,7 @@ func renderMainMenu(m Model) string {
 
 	// Title
 	sb.WriteString("\n\n")
-	sb.WriteString(menuTitleStyle.Render("⚓  B A T T L E S H I P  ⚓"))
+	sb.WriteString(menuTitleStyle.Render("B A T T L E S H I P"))
 	sb.WriteString("\n\n")
 
 	// ASCII Art
@@ -160,7 +160,7 @@ func renderMainMenu(m Model) string {
 	sb.WriteString("\n\n")
 
 	// Board size selection
-	boardSizeText := fmt.Sprintf("◀  Board Size: %dx%d  ▶", m.selectedBoardSize, m.selectedBoardSize)
+	boardSizeText := fmt.Sprintf("<  Board Size: %dx%d  >", m.selectedBoardSize, m.selectedBoardSize)
 	if m.menuSelection == 0 {
 		sb.WriteString(selectedMenuItemStyle.Render(boardSizeText))
 	} else {
@@ -170,7 +170,7 @@ func renderMainMenu(m Model) string {
 
 	// Difficulty selection
 	difficultyNames := []string{"Easy", "Normal", "Hard"}
-	difficultyText := fmt.Sprintf("◀  Difficulty: %s  ▶", difficultyNames[m.selectedDifficulty])
+	difficultyText := fmt.Sprintf("<  Difficulty: %s  >", difficultyNames[m.selectedDifficulty])
 	if m.menuSelection == 1 {
 		sb.WriteString(selectedMenuItemStyle.Render(difficultyText))
 	} else {
@@ -179,9 +179,9 @@ func renderMainMenu(m Model) string {
 	sb.WriteString("\n\n")
 
 	// Salvo mode selection
-	salvoText := "◀  Salvo Mode: Off  ▶"
+	salvoText := "<  Salvo Mode: Off  >"
 	if m.selectedSalvoMode {
-		salvoText = "◀  Salvo Mode: On  ▶"
+		salvoText = "<  Salvo Mode: On  >"
 	}
 	if m.menuSelection == 2 {
 		sb.WriteString(selectedMenuItemStyle.Render(salvoText))
@@ -192,22 +192,22 @@ func renderMainMenu(m Model) string {
 
 	// Start game
 	if m.menuSelection == 3 {
-		sb.WriteString(selectedMenuItemStyle.Render("▶  Start New Game"))
+		sb.WriteString(selectedMenuItemStyle.Render(">  Start New Game"))
 	} else {
-		sb.WriteString(menuItemStyle.Render("▶  Start New Game"))
+		sb.WriteString(menuItemStyle.Render(">  Start New Game"))
 	}
 	sb.WriteString("\n\n")
 
 	// Quit
 	if m.menuSelection == 4 {
-		sb.WriteString(selectedMenuItemStyle.Render("✕  Quit"))
+		sb.WriteString(selectedMenuItemStyle.Render("X  Quit"))
 	} else {
-		sb.WriteString(menuItemStyle.Render("✕  Quit"))
+		sb.WriteString(menuItemStyle.Render("X  Quit"))
 	}
 	sb.WriteString("\n\n")
 
 	sb.WriteString("\n")
-	sb.WriteString(helpStyle.Render("Use ↑/↓ to navigate, ←/→ to change options, Enter to select"))
+	sb.WriteString(helpStyle.Render("Use Up/Down to navigate, Left/Right to change options, Enter to select"))
 
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, sb.String())
 }
@@ -420,7 +420,7 @@ func renderCell(cell game.CellState, isCursor bool, isPreview bool, showShips bo
 		}
 		if isPreview {
 			// In salvo mode, isPreview is used for queued shots
-			return queuedStyle.Render("[◎]")
+			return queuedStyle.Render("[*]")
 		}
 		return waterStyle.Render(" " + symbol + " ")
 
@@ -460,9 +460,9 @@ func renderGameOver(m Model) string {
 	// Game over message
 	gameOverMsg := ""
 	if m.game.Winner == "Player" {
-		gameOverMsg = "🎉 VICTORY! You sunk all enemy ships! 🎉"
+		gameOverMsg = "VICTORY! You sunk all enemy ships!"
 	} else {
-		gameOverMsg = "💥 DEFEAT! All your ships were sunk! 💥"
+		gameOverMsg = "DEFEAT! All your ships were sunk!"
 	}
 
 	gameOverStyle := lipgloss.NewStyle().
@@ -481,7 +481,7 @@ func renderGameOver(m Model) string {
 			Foreground(lipgloss.Color("#FFD700")).
 			Padding(0, 2)
 
-		sb.WriteString(achievementStyle.Render("🏆 NEW ACHIEVEMENTS UNLOCKED! 🏆"))
+		sb.WriteString(achievementStyle.Render("NEW ACHIEVEMENTS UNLOCKED!"))
 		sb.WriteString("\n\n")
 
 		for _, ach := range m.newlyUnlocked {
@@ -492,7 +492,7 @@ func renderGameOver(m Model) string {
 				Padding(0, 1).
 				Width(40)
 
-			achText := fmt.Sprintf("⭐ %s\n   %s", ach.Name, ach.Description)
+			achText := fmt.Sprintf("* %s\n   %s", ach.Name, ach.Description)
 			sb.WriteString(achBox.Render(achText))
 			sb.WriteString("\n")
 		}
