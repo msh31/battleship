@@ -44,21 +44,3 @@ const menuBattleshipsArt = `
 
             YOUR FLEET                                 CAPTAIN CLAUDE
 `
-
-const hitAnimationArt = `
-    \  |  /
-  ___\\_|_/___
-     >BOOM!<
-  ‾‾‾/ | \‾‾‾
-    /  |  \
-`
-
-const missAnimationArt = `
-    ~~~
-   ~   ~
-  ~ S P ~
-   ~ L ~
-    ~ A ~
-     ~ S ~
-      ~ H ~
-`

@@ -9,23 +9,20 @@ import (
 
 // Model represents the bubbletea model for the game
 type Model struct {
-	game                *game.Game
-	cursorRow           int
-	cursorCol           int
-	shipOrientation     game.Orientation
-	showHelp            bool
-	computerThinking    bool
-	width               int
-	height              int
-	menuSelection       int
-	selectedDifficulty  game.Difficulty
-	selectedBoardSize   int
-	selectedSalvoMode   bool
-	showAnimation       bool
-	animationType       string // "hit" or "miss"
-	lastAttackPos       game.Position
-	achievements        *Achievements
-	newlyUnlocked       []Achievement
+	game                 *game.Game
+	cursorRow            int
+	cursorCol            int
+	shipOrientation      game.Orientation
+	showHelp             bool
+	computerThinking     bool
+	width                int
+	height               int
+	menuSelection        int
+	selectedDifficulty   game.Difficulty
+	selectedBoardSize    int
+	selectedSalvoMode    bool
+	achievements         *Achievements
+	newlyUnlocked        []Achievement
 	showAchievementsMenu bool
 }
 
@@ -35,14 +32,6 @@ type computerTurnMsg struct{}
 func computerTurn() tea.Msg {
 	time.Sleep(800 * time.Millisecond)
 	return computerTurnMsg{}
-}
-
-// clearAnimationMsg is sent after a delay to clear animations
-type clearAnimationMsg struct{}
-
-func clearAnimation() tea.Msg {
-	time.Sleep(600 * time.Millisecond)
-	return clearAnimationMsg{}
 }
 
 // InitialModel creates the initial model
@@ -84,10 +73,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.newlyUnlocked = m.achievements.CheckAndUnlock(m.game)
 			}
 		}
-		return m, nil
-
-	case clearAnimationMsg:
-		m.showAnimation = false
 		return m, nil
 
 	case tea.KeyMsg:
@@ -255,23 +240,7 @@ func (m Model) handleAction() (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case game.PlayerTurnPhase:
-		// Store last attack position for animation
-		m.lastAttackPos = pos
-
-		// Check current cell state to determine if it will be hit or miss
-		cell := m.game.ComputerBoard.GetCell(pos)
-
 		if m.game.PlayerAttack(pos) {
-			// Trigger animation for non-salvo mode
-			if !m.game.SalvoMode {
-				m.showAnimation = true
-				if cell == game.ShipCell {
-					m.animationType = "hit"
-				} else {
-					m.animationType = "miss"
-				}
-			}
-
 			// Check for achievements if game ended (player won)
 			if m.game.Phase == game.GameOverPhase {
 				m.newlyUnlocked = m.achievements.CheckAndUnlock(m.game)
@@ -279,15 +248,7 @@ func (m Model) handleAction() (tea.Model, tea.Cmd) {
 
 			if m.game.Phase == game.ComputerTurnPhase {
 				m.computerThinking = true
-				var cmds []tea.Cmd
-				if m.showAnimation {
-					cmds = append(cmds, clearAnimation)
-				}
-				cmds = append(cmds, computerTurn)
-				return m, tea.Batch(cmds...)
-			}
-			if m.showAnimation {
-				return m, clearAnimation
+				return m, computerTurn
 			}
 		}
 		return m, nil
