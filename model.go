@@ -19,6 +19,7 @@ type Model struct {
 	height             int
 	menuSelection      int
 	selectedDifficulty game.Difficulty
+	selectedBoardSize  int
 }
 
 // computerTurnMsg is sent after a delay to simulate computer thinking
@@ -34,12 +35,13 @@ func InitialModel() Model {
 	g := game.NewGame(10)
 	g.Phase = game.MainMenuPhase
 	return Model{
-		game:            g,
-		cursorRow:       0,
-		cursorCol:       0,
-		shipOrientation: game.Horizontal,
-		showHelp:        false,
-		menuSelection:   0,
+		game:              g,
+		cursorRow:         0,
+		cursorCol:         0,
+		shipOrientation:   game.Horizontal,
+		showHelp:          false,
+		menuSelection:     0,
+		selectedBoardSize: 10,
 	}
 }
 
@@ -94,7 +96,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "down", "s":
 			if m.game.Phase == game.MainMenuPhase {
-				if m.menuSelection < 2 { // 0 = Difficulty, 1 = Play, 2 = Quit
+				if m.menuSelection < 3 { // 0 = Board Size, 1 = Difficulty, 2 = Play, 3 = Quit
 					m.menuSelection++
 				}
 			} else if m.cursorRow < m.game.BoardSize-1 {
@@ -104,6 +106,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "left", "a":
 			if m.game.Phase == game.MainMenuPhase && m.menuSelection == 0 {
+				// Cycle board size left
+				boardSizes := []int{8, 10, 12}
+				for i, size := range boardSizes {
+					if size == m.selectedBoardSize {
+						if i == 0 {
+							m.selectedBoardSize = boardSizes[len(boardSizes)-1]
+						} else {
+							m.selectedBoardSize = boardSizes[i-1]
+						}
+						break
+					}
+				}
+			} else if m.game.Phase == game.MainMenuPhase && m.menuSelection == 1 {
 				// Cycle difficulty left
 				if m.selectedDifficulty == game.Easy {
 					m.selectedDifficulty = game.Hard
@@ -117,6 +132,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "right", "d":
 			if m.game.Phase == game.MainMenuPhase && m.menuSelection == 0 {
+				// Cycle board size right
+				boardSizes := []int{8, 10, 12}
+				for i, size := range boardSizes {
+					if size == m.selectedBoardSize {
+						if i == len(boardSizes)-1 {
+							m.selectedBoardSize = boardSizes[0]
+						} else {
+							m.selectedBoardSize = boardSizes[i+1]
+						}
+						break
+					}
+				}
+			} else if m.game.Phase == game.MainMenuPhase && m.menuSelection == 1 {
 				// Cycle difficulty right
 				if m.selectedDifficulty == game.Hard {
 					m.selectedDifficulty = game.Easy
@@ -153,12 +181,12 @@ func (m Model) handleAction() (tea.Model, tea.Cmd) {
 
 	switch m.game.Phase {
 	case game.MainMenuPhase:
-		if m.menuSelection == 0 {
-			// Difficulty selection - do nothing, just cycle with arrow keys
+		if m.menuSelection == 0 || m.menuSelection == 1 {
+			// Board Size or Difficulty selection - do nothing, just cycle with arrow keys
 			return m, nil
-		} else if m.menuSelection == 1 {
+		} else if m.menuSelection == 2 {
 			// Start new game
-			m.game = game.NewGame(10)
+			m.game = game.NewGame(m.selectedBoardSize)
 			m.game.Difficulty = m.selectedDifficulty
 			m.cursorRow = 0
 			m.cursorCol = 0
