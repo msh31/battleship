@@ -20,6 +20,7 @@ type Model struct {
 	menuSelection      int
 	selectedDifficulty game.Difficulty
 	selectedBoardSize  int
+	selectedSalvoMode  bool
 }
 
 // computerTurnMsg is sent after a delay to simulate computer thinking
@@ -96,7 +97,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "down", "s":
 			if m.game.Phase == game.MainMenuPhase {
-				if m.menuSelection < 3 { // 0 = Board Size, 1 = Difficulty, 2 = Play, 3 = Quit
+				if m.menuSelection < 4 { // 0 = Board Size, 1 = Difficulty, 2 = Salvo, 3 = Play, 4 = Quit
 					m.menuSelection++
 				}
 			} else if m.cursorRow < m.game.BoardSize-1 {
@@ -125,6 +126,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				} else {
 					m.selectedDifficulty--
 				}
+			} else if m.game.Phase == game.MainMenuPhase && m.menuSelection == 2 {
+				// Toggle salvo mode
+				m.selectedSalvoMode = !m.selectedSalvoMode
 			} else if m.cursorCol > 0 {
 				m.cursorCol--
 			}
@@ -151,6 +155,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				} else {
 					m.selectedDifficulty++
 				}
+			} else if m.game.Phase == game.MainMenuPhase && m.menuSelection == 2 {
+				// Toggle salvo mode
+				m.selectedSalvoMode = !m.selectedSalvoMode
 			} else if m.cursorCol < m.game.BoardSize-1 {
 				m.cursorCol++
 			}
@@ -169,6 +176,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case " ", "enter":
 			return m.handleAction()
+
+		case "f", "F":
+			// Fire salvo
+			if m.game.Phase == game.PlayerTurnPhase && m.game.SalvoMode {
+				if len(m.game.PlayerSalvo) > 0 {
+					m.game.ExecutePlayerSalvo()
+					if m.game.Phase == game.ComputerTurnPhase {
+						m.computerThinking = true
+						return m, computerTurn
+					}
+				}
+			}
+			return m, nil
 		}
 	}
 
@@ -181,13 +201,14 @@ func (m Model) handleAction() (tea.Model, tea.Cmd) {
 
 	switch m.game.Phase {
 	case game.MainMenuPhase:
-		if m.menuSelection == 0 || m.menuSelection == 1 {
-			// Board Size or Difficulty selection - do nothing, just cycle with arrow keys
+		if m.menuSelection == 0 || m.menuSelection == 1 || m.menuSelection == 2 {
+			// Board Size, Difficulty, or Salvo Mode selection - do nothing, just cycle with arrow keys
 			return m, nil
-		} else if m.menuSelection == 2 {
+		} else if m.menuSelection == 3 {
 			// Start new game
 			m.game = game.NewGame(m.selectedBoardSize)
 			m.game.Difficulty = m.selectedDifficulty
+			m.game.SalvoMode = m.selectedSalvoMode
 			m.cursorRow = 0
 			m.cursorCol = 0
 			m.shipOrientation = game.Horizontal

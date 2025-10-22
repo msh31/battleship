@@ -64,6 +64,11 @@ var (
 			Background(darkBlue).
 			Bold(true)
 
+	queuedStyle = cellStyle.Copy().
+			Foreground(lipgloss.Color("#FFA500")).
+			Background(darkBlue).
+			Bold(true)
+
 	messageStyle = lipgloss.NewStyle().
 			Foreground(successGreen).
 			Bold(true).
@@ -173,8 +178,20 @@ func renderMainMenu(m Model) string {
 	}
 	sb.WriteString("\n\n")
 
-	// Start game
+	// Salvo mode selection
+	salvoText := "◀  Salvo Mode: Off  ▶"
+	if m.selectedSalvoMode {
+		salvoText = "◀  Salvo Mode: On  ▶"
+	}
 	if m.menuSelection == 2 {
+		sb.WriteString(selectedMenuItemStyle.Render(salvoText))
+	} else {
+		sb.WriteString(menuItemStyle.Render(salvoText))
+	}
+	sb.WriteString("\n\n")
+
+	// Start game
+	if m.menuSelection == 3 {
 		sb.WriteString(selectedMenuItemStyle.Render("▶  Start New Game"))
 	} else {
 		sb.WriteString(menuItemStyle.Render("▶  Start New Game"))
@@ -182,7 +199,7 @@ func renderMainMenu(m Model) string {
 	sb.WriteString("\n\n")
 
 	// Quit
-	if m.menuSelection == 3 {
+	if m.menuSelection == 4 {
 		sb.WriteString(selectedMenuItemStyle.Render("✕  Quit"))
 	} else {
 		sb.WriteString(menuItemStyle.Render("✕  Quit"))
@@ -210,7 +227,13 @@ func renderPhaseMessage(m Model) string {
 				ship.Name, ship.Length, orientation)
 		}
 	case game.PlayerTurnPhase:
-		msg = "Your turn! Select a target and fire!"
+		if m.game.SalvoMode {
+			shotsRemaining := m.game.GetSalvoShotsRemaining()
+			queued := len(m.game.PlayerSalvo)
+			msg = fmt.Sprintf("Salvo Mode: %d/%d shots queued (Press F to Fire)", queued, queued+shotsRemaining)
+		} else {
+			msg = "Your turn! Select a target and fire!"
+		}
 	case game.ComputerTurnPhase:
 		claudeMsg := m.game.ClaudeThinking + "..."
 		return claudeThinkingStyle.Render("Captain Claude is " + claudeMsg)
@@ -367,7 +390,17 @@ func renderEnemyBoard(m Model) string {
 			cell := m.game.ComputerBoard.GetCell(pos)
 
 			isCursor := row == m.cursorRow && col == m.cursorCol
-			cellStr := renderCell(cell, isCursor, false, false)
+
+			// Check if this position is queued for salvo
+			isQueued := false
+			for _, queued := range m.game.PlayerSalvo {
+				if queued.Row == row && queued.Col == col {
+					isQueued = true
+					break
+				}
+			}
+
+			cellStr := renderCell(cell, isCursor, isQueued, false)
 			sb.WriteString(cellStr)
 		}
 		sb.WriteString("\n")
@@ -386,7 +419,8 @@ func renderCell(cell game.CellState, isCursor bool, isPreview bool, showShips bo
 			return cursorStyle.Render("[" + symbol + "]")
 		}
 		if isPreview {
-			return shipStyle.Render("▓")
+			// In salvo mode, isPreview is used for queued shots
+			return queuedStyle.Render("[◎]")
 		}
 		return waterStyle.Render(" " + symbol + " ")
 
